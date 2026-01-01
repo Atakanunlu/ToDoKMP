@@ -1,6 +1,7 @@
 package org.atakanunlu.data
 
 
+
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query

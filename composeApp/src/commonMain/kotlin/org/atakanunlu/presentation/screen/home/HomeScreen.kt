@@ -1,31 +1,13 @@
 package org.atakanunlu.presentation.screen.home
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,8 +21,7 @@ import org.atakanunlu.domain.ToDoTask
 import org.atakanunlu.presentation.components.ErrorScreen
 import org.atakanunlu.presentation.components.LoadingScreen
 import org.atakanunlu.presentation.components.TaskView
-
-
+import org.atakanunlu.presentation.screen.task.TaskScreen
 
 class HomeScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -53,34 +34,48 @@ class HomeScreen : Screen {
 
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(title = { Text(text = "Home") })
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "My Tasks",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
             },
             floatingActionButton = {
                 FloatingActionButton(
-                    onClick = {  },
-                    shape = RoundedCornerShape(size = 12.dp)
+                    onClick = { navigator.push(TaskScreen()) },
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit Icon"
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Task",
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 24.dp)
-                    .padding(
-                        top = padding.calculateTopPadding(),
-                        bottom = padding.calculateBottomPadding()
-                    )
+                    .padding(padding)
+                    .padding(horizontal = 16.dp)
             ) {
+                Spacer(modifier = Modifier.height(8.dp))
+
                 DisplayTasks(
                     modifier = Modifier.weight(1f),
                     tasks = activeTasks,
                     onSelect = { selectedTask ->
-
+                        navigator.push(TaskScreen(selectedTask))
                     },
                     onFavorite = { task, isFavorite ->
                         viewModel.setAction(
@@ -93,7 +88,9 @@ class HomeScreen : Screen {
                         )
                     }
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 DisplayTasks(
                     modifier = Modifier.weight(1f),
                     tasks = completedTasks,
@@ -109,6 +106,8 @@ class HomeScreen : Screen {
                         )
                     }
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -130,21 +129,30 @@ fun DisplayTasks(
     if (showDialog) {
         AlertDialog(
             title = {
-                Text(text = "Delete", fontSize = MaterialTheme.typography.titleLarge.fontSize)
+                Text(
+                    text = "Delete Task",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
             },
             text = {
                 Text(
-                    text = "Are you sure you want to remove '${taskToDelete!!.title}' task?",
-                    fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                    text = "Are you sure you want to delete '${taskToDelete!!.title}'?",
+                    style = MaterialTheme.typography.bodyMedium
                 )
             },
             confirmButton = {
-                Button(onClick = {
-                    onDelete?.invoke(taskToDelete!!)
-                    showDialog = false
-                    taskToDelete = null
-                }) {
-                    Text(text = "Yes")
+                FilledTonalButton(
+                    onClick = {
+                        onDelete?.invoke(taskToDelete!!)
+                        showDialog = false
+                        taskToDelete = null
+                    },
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
+                ) {
+                    Text("Delete")
                 }
             },
             dismissButton = {
@@ -154,30 +162,42 @@ fun DisplayTasks(
                         showDialog = false
                     }
                 ) {
-                    Text(text = "Cancel")
+                    Text("Cancel")
                 }
             },
             onDismissRequest = {
                 taskToDelete = null
                 showDialog = false
-            }
+            },
+            shape = RoundedCornerShape(20.dp)
         )
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            modifier = Modifier.padding(horizontal = 12.dp),
-            text = if (showActive) "Active Tasks" else "Completed Tasks",
-            fontSize = MaterialTheme.typography.titleMedium.fontSize,
-            fontWeight = FontWeight.Medium
-        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                text = if (showActive) "Active" else "Completed",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
+
         tasks.DisplayResult(
             onLoading = { LoadingScreen() },
             onError = { ErrorScreen(message = it) },
             onSuccess = {
                 if (it.isNotEmpty()) {
-                    LazyColumn(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         items(
                             items = it,
                             key = { task -> task._id.toHexString() }
